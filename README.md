@@ -10,18 +10,18 @@
 
 | № | Модуль | Технологический стек | Путь в репозитории | Гайдлайн разработки |
 |---|--------|----------------------|--------------------|---------------------|
-| 1 | **Backend Core** | Python 3.11+, Django 5 + DRF, PostgreSQL | `backend/apps/core/`, `backend/api/` | [docs/guidelines/01_BACKEND_CORE.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/01_BACKEND_CORE.md) |
-| 2 | **File Storage** | MinIO (S3) + `django-storages`, Pillow/HEIF | `backend/apps/storage/` | [docs/guidelines/02_FILE_STORAGE.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/02_FILE_STORAGE.md) |
-| 3 | **Notification Service** | Apprise + Telegram Bot API | `backend/apps/notifications/` | [docs/guidelines/03_NOTIFICATION_SERVICE.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/03_NOTIFICATION_SERVICE.md) |
-| 4 | **Client Web App** | Django Templates, Bootstrap 5, JS Polling | `backend/apps/web/`, `backend/templates/`, `backend/static/` | [docs/guidelines/04_CLIENT_WEB_APP.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/04_CLIENT_WEB_APP.md) |
-| 5 | **Employee Desktop App** | Python 3.11+, PySide6 (MVP), REST Client | `desktop/` | [docs/guidelines/05_DESKTOP_CLIENT.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/05_DESKTOP_CLIENT.md) |
-| 6 | **Camera & Printer Hardware** | USB PTP/MTP/WIA, Win32Print / QtPrintSupport | `desktop/hardware/` | [docs/guidelines/06_HARDWARE_CAMERA_PRINTER.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/06_HARDWARE_CAMERA_PRINTER.md) |
-| 7 | **QA, Testing & DevOps** | PyTest (`pytest-django`, `pytest-qt`), Docker, Nginx | `tests/`, `deploy/`, `.github/workflows/` | [docs/guidelines/07_QA_TESTING_DEVOPS.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/07_QA_TESTING_DEVOPS.md) |
+| 1 | **Backend Core** | Python 3.11+, Django 5 + DRF, PostgreSQL | `backend/apps/core/`, `backend/api/` | [docs/guidelines/01_BACKEND_CORE.md](docs/guidelines/01_BACKEND_CORE.md) |
+| 2 | **File Storage** | MinIO (S3) + `django-storages`, Pillow/HEIF | `backend/apps/storage/` | [docs/guidelines/02_FILE_STORAGE.md](docs/guidelines/02_FILE_STORAGE.md) |
+| 3 | **Notification Service** | Apprise + Telegram Bot API | `backend/apps/notifications/` | [docs/guidelines/03_NOTIFICATION_SERVICE.md](docs/guidelines/03_NOTIFICATION_SERVICE.md) |
+| 4 | **Client Web App** | Django Templates, Bootstrap 5, JS Polling | `backend/apps/web/`, `backend/templates/`, `backend/static/` | [docs/guidelines/04_CLIENT_WEB_APP.md](docs/guidelines/04_CLIENT_WEB_APP.md) |
+| 5 | **Employee Desktop App** | Python 3.11+, PySide6 (MVP), REST Client | `desktop/` | [docs/guidelines/05_DESKTOP_CLIENT.md](docs/guidelines/05_DESKTOP_CLIENT.md) |
+| 6 | **Camera & Printer Hardware** | USB PTP/MTP/WIA, Win32Print / QtPrintSupport | `desktop/hardware/` | [docs/guidelines/06_HARDWARE_CAMERA_PRINTER.md](docs/guidelines/06_HARDWARE_CAMERA_PRINTER.md) |
+| 7 | **QA, Testing & DevOps** | PyTest (`pytest-django`, `pytest-qt`), Docker, Nginx | `tests/`, `deploy/`, `.github/workflows/` | [docs/guidelines/07_QA_TESTING_DEVOPS.md](docs/guidelines/07_QA_TESTING_DEVOPS.md) |
 
-Главный архитектурный индекс и контракты взаимодействия модулей: [docs/guidelines/00_ARCHITECTURE_OVERVIEW.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/00_ARCHITECTURE_OVERVIEW.md).
-Регламент работы с проектом и репозиторием (MSF, Git Flow, управление конфигурацией, изменениями и релизами): [docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md).
-История разработки по этапам и веткам Git Flow: [docs/DEVELOPMENT_HISTORY.md](file:///c:/Users/notebook/UNN/you-photo/docs/DEVELOPMENT_HISTORY.md).
-Регламент фиксации истории разработки в Git Flow (коммиты, ветки `feature/*`, Pull Request / Merge Request граф по вехам): [docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md).
+Главный архитектурный индекс и контракты взаимодействия модулей: [docs/guidelines/00_ARCHITECTURE_OVERVIEW.md](docs/guidelines/00_ARCHITECTURE_OVERVIEW.md).
+Регламент работы с проектом и репозиторием (MSF, Git Flow, управление конфигурацией, изменениями и релизами): [docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md](docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md).
+История разработки по этапам и веткам Git Flow: [docs/DEVELOPMENT_HISTORY.md](docs/DEVELOPMENT_HISTORY.md).
+Регламент фиксации истории разработки в Git Flow (коммиты, ветки `feature/*`, Pull Request / Merge Request граф по вехам): [docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md](docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md).
 
 ---
 
