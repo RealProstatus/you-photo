@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "youphoto"
+version = "1.0.0"
+description = "Система заказов городской сети фотосалонов YouPhoto"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["backend", "desktop"]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: Модульные тесты бизнес-логики и сервисов",
+    "integration: Интеграционные тесты сценариев US-01..US-08",
+    "desktop: Тесты десктопного приложения PySide6 (pytest-qt)",
+    "performance: Тесты производительности (S-PERF-01..03)",
+    "security: Тесты ролевого доступа и безопасности (S-SEC-01..04)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["migrations", ".venv", "venv", "build", "dist"]
