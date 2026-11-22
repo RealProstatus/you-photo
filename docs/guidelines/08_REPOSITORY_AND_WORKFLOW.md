@@ -11,12 +11,12 @@
 1. **Единая система контроля версий**:
    - Используется **Git** с центральным репозиторием на **GitHub**.
 2. **Фиксация зависимостей**:
-   - Все пакеты Python строго фиксируются с указанием версий в файлах [requirements.txt](file:///c:/Users/notebook/UNN/you-photo/requirements.txt), [requirements-desktop.txt](file:///c:/Users/notebook/UNN/you-photo/requirements-desktop.txt) и [pyproject.toml](file:///c:/Users/notebook/UNN/you-photo/pyproject.toml).
+   - Все пакеты Python строго фиксируются с указанием версий в файлах [requirements.txt](../../requirements.txt), [requirements-desktop.txt](../../requirements-desktop.txt) и [pyproject.toml](../../pyproject.toml).
    - Обновление сторонних пакетов (`Django`, `PySide6`, `PostgreSQL`, `MinIO`, `Apprise`) проводится только после прогона автотестов (`п. 4 Функциональной спецификации`).
 3. **Декларативное окружение и хранение секретов (`152-ФЗ`, `S-SEC-01`, `S-SEC-02`)**:
    - Конфигурация серверного окружения описывается декларативно через `deploy/Dockerfile.backend`, `deploy/docker-compose.yml` и `deploy/nginx/nginx.conf`.
    - **Категорически запрещено** коммитить в Git любые секреты: пароли `PostgreSQL`, ключи `MinIO` (`MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`), токен Telegram-бота (`TELEGRAM_BOT_TOKEN`), приватные ключи TLS и `SECRET_KEY` Django.
-   - Все секреты передаются исключительно через переменные окружения (`.env`), которые исключены из Git через [.gitignore](file:///c:/Users/notebook/UNN/you-photo/.gitignore). В репозитории хранится только безопасный шаблон [.env.example](file:///c:/Users/notebook/UNN/you-photo/.env.example).
+   - Все секреты передаются исключительно через переменные окружения (`.env`), которые исключены из Git через [.gitignore](../../.gitignore). В репозитории хранится только безопасный шаблон [.env.example](../../.env.example).
 4. **Версионирование схемы базы данных**:
    - Схема БД версионируется исключительно средствами миграций **Django ORM** (`backend/apps/*/migrations/`).
    - Каждая миграция должна поддерживать возможность отката (`rollback`) и проверяться перед слиянием (`п. 3.3.1`).
