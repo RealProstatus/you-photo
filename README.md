@@ -20,6 +20,7 @@
 
 Главный архитектурный индекс и контракты взаимодействия модулей: [docs/guidelines/00_ARCHITECTURE_OVERVIEW.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/00_ARCHITECTURE_OVERVIEW.md).
 Регламент работы с проектом и репозиторием (MSF, Git Flow, управление конфигурацией, изменениями и релизами): [docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/08_REPOSITORY_AND_WORKFLOW.md).
+История разработки по этапам и веткам Git Flow: [docs/DEVELOPMENT_HISTORY.md](file:///c:/Users/notebook/UNN/you-photo/docs/DEVELOPMENT_HISTORY.md).
 Регламент фиксации истории разработки в Git Flow (коммиты, ветки `feature/*`, Pull Request / Merge Request граф по вехам): [docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md](file:///c:/Users/notebook/UNN/you-photo/docs/guidelines/09_GIT_FLOW_AND_PR_HISTORY.md).
 
 ---
