@@ -1,0 +1,13 @@
+# Employee Desktop Application (Windows 10/11)
+PySide6>=6.7.0
+requests>=2.32.0
+Pillow>=10.3.0
+pillow-heif>=0.16.0
+python-dotenv>=1.0.1
+pywin32>=306; sys_platform == "win32"
+
+# Packaging & Testing
+pyinstaller>=6.7.0
+pytest>=8.2.0
+pytest-qt>=4.4.0
+pytest-mock>=3.14.0
