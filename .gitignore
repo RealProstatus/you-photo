@@ -53,6 +53,7 @@ htmlcov/
 # IDE & OS
 .idea/
 .vscode/
+.codegraph/
 *.swp
 *.swo
 Thumbs.db
