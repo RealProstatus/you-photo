@@ -11,7 +11,7 @@
 | Веха | Наименование фазы (по «Структуре проекта») | Статус | Ключевые артефакты и результаты |
 |------|--------------------------------------------|--------|---------------------------------|
 | **M1** | Фаза выработки концепции | ✅ Завершена | Изучены и зафиксированы «Концепция проекта», «Структура проекта», сценарии `US-01..US-08`, рамки `FTR1–FTR7`. |
-| **M2** | Фаза планирования и архитектуры | ✅ Завершена | Изучена «Функциональная спецификация» и UML-диаграммы; разработаны архитектурные гайдлайны модулей `docs/guidelines/00..09`, схема БД, контракты `IBackendApi`, `IFileStorage`, `INotificationService`, `ICameraService`, `IPrinterService`. |
+| **M2** | Фаза планирования и архитектуры | ✅ Завершена | Изучена «Функциональная спецификация» и UML-диаграммы; разработаны архитектурные гайдлайны модулей `docs/guidelines/00..09`, регламент для ИИ-агентов [AGENTS.md](../AGENTS.md), схема БД, контракты `IBackendApi`, `IFileStorage`, `INotificationService`, `ICameraService`, `IPrinterService`. |
 | **M3** | Готовность серверной части (Этап 1) | 🔄 В процессе (ядро БД, Storage и Notifications готовы) | Реализованы доменные модели и миграции (`User`, `Salon`, `Equipment`, `Service`, `Order`, `OrderItem`, `PhotoFile`, `OrderStatusHistory`), модули `File Storage` (MinIO/S3, валидация `<= 50 МБ`, очистка через 30 дней) и `Notification Service` (`Apprise` + `TelegramBotBinder`). Ожидают завершения: `OrderService`, `RoutingService`, `PricingService`, `REST API v1`. |
 | **M4** | Окончание фазы разработки (`FTR1–FTR7`) | ⏳ Запланирована | Реализация клиентского веб-портала (`Модуль 4`: Django Templates + Bootstrap 5 + `StatusPollerJS`) и десктопного АРМ сотрудника (`Модули 5–6`: `PySide6` MVP, `UsbCameraService`, `DocumentCropper`, `WindowsPrinterService`). |
 | **M5** | Готовность к внедрению (Тестирование и DevOps) | 🔄 В процессе (готов пакет из 143 E2E-тестов) | Разработан полный набор из 143 сквозных приемочных тестов `tests/e2e/` (`Tier 1–4`) по всем `US-01..US-08`. Ожидают завершения: `deploy/` (`Docker Compose`, `Nginx`, `backup_db.sh`, `YouPhoto.spec`), `.github/workflows/ci.yml`, `tests/unit/`, `tests/integration/`, `tests/desktop/`. |
@@ -19,26 +19,35 @@
 
 ---
 
-## 2. Граф истории репозитория (Git Flow)
+## 2. История и структура веток (Git Flow)
 
-```text
-*   af5d1ce (HEAD -> develop, origin/develop) Merge pull request #3 from feature/US-01-US-08-e2e-test-suite: Сквозные автотесты E2E Tier 1-4 по сценариям US-01..US-08
-|\  
-| * 69dcc39 (feature/US-01-US-08-e2e-test-suite) test(e2e): реализовать набор сквозных приемочных тестов Tier 1-4 по сценариям US-01..US-08
-|/  
-*   d5b1140 Merge pull request #2 from feature/US-01-storage-and-notifications: Файловое хранилище MinIO и сервис Telegram-уведомлений
-|\  
-| * b5fb525 (feature/US-01-storage-and-notifications) feat(notifications): реализовать AppriseNotificationService и привязку TelegramBotBinder (US-08, FUNC 3.3)
-| * 359fc9a feat(storage): реализовать FileValidator (JPEG/PNG/HEIC/TIFF <= 50MB), MinioFileStorage и очистку 30 дней (S-SEC-04)
-|/  
-*   923a3f4 Merge pull request #1 from feature/US-02-backend-core-and-routing: Серверное ядро и модели данных (FTR1, FTR2, FTR4)
-|\  
-| * 9da852f (feature/US-02-backend-core-and-routing) feat(core): реализовать модели User, Salon, Equipment, Service, Order и миграции БД
-|/  
-* ab8671c chore(init): инициализация репозитория, конфигурации и архитектурных гайдлайнов 00..09
-* 70c24d8 (origin/main, main) Create README.md
+В репозитории используется **Git Flow** с двумя защищёнными ветками: `main` (релизы) и `develop` (интеграция текущей разработки). Актуальный граф коммитов в любой момент можно посмотреть командой:
+
+```bash
+git log --graph --oneline --decorate --all
 ```
 
+Каноническая схема ветвления проекта:
+
+```text
+main       ●──────────────────────────────────────────────────────▶ (v1.0.0 — Веха M6)
+            \                                                   /
+develop      ●────●────●────●────●────●────────────────────────●
+              \  / \  / \  / \  / \  /
+feature/*      ●    ●    ●    ●    ●   (PR в develop через --no-ff)
+```
+
+Фактическая хронология ключевых этапов и слияний в `develop`:
+
+| Этап / PR | Ветка | Ключевой коммит / Merge | Содержание |
+|-----------|-------|-------------------------|------------|
+| Init (`M1–M2`) | `main` -> `develop` | `70c24d8`, `ab8671c` | Инициализация репозитория, конфигов и гайдлайнов `00..09`. |
+| PR #1 (локальный merge) | `feature/US-02-backend-core-and-routing` | `9da852f` -> `923a3f4` | Модели БД (`User`, `Salon`, `Equipment`, `Service`, `Order` и др.), миграции, auth backend (`FTR1`, `FTR2`, `FTR4`). |
+| PR #2 (локальный merge) | `feature/US-01-storage-and-notifications` | `359fc9a`, `b5fb525` -> `d5b1140` | Модуль `storage` (`FileValidator`, `MinioFileStorage`, очистка 30 дней) и модуль `notifications` (`Apprise`, `TelegramBotBinder`). |
+| PR #3 (локальный merge) | `feature/US-01-US-08-e2e-test-suite` | `69dcc39` -> `af5d1ce` | Пакет из 143 сквозных приёмочных тестов `tests/e2e/` (`Tier 1–4`, `US-01..US-08`). |
+| Docs & Sync | `develop` | `4a07be6`, `decb999`, `6de73a7`, `72748cc` | Фиксация истории разработки, замена абсолютных локальных путей на относительные, уточнение ссылок. |
+| PR #4 (GitHub) | `Serebro1:develop` -> `develop` | `0f3e487` | Интеграция Этапа 1 (`Core`, `Storage`, `Notifications`, `E2E` и обновлённой документации) в `origin/develop`. |
+| Docs & Agent Guidelines | `docs/agents-guidelines-and-history` -> `develop` | *(текущий PR)* | Добавление [AGENTS.md](../AGENTS.md), исключение `.codegraph/` в [`.gitignore`](../.gitignore) и актуализация `DEVELOPMENT_HISTORY.md`. |
 ---
 
 ## 3. Подробное описание выполненных этапов разработки
@@ -113,20 +122,29 @@
 
 ---
 
-## 4. Дорожная карта оставшихся этапов (для возобновления разработки от `develop`)
+### Этап 1.4. Интеграция Этапа 1 в `origin/develop`, регламент ИИ-агентов и актуализация документации
+- **Коммиты и PR**:
+  - `4a07be6` — фиксация журнала разработки `docs/DEVELOPMENT_HISTORY.md`.
+  - `e49261a`..`2152f2c`, `decb999`, `6de73a7`, `72748cc` — перевод ссылок в документации на относительные пути и уточнение структуры каталога документации.
+  - `0f3e487` (**PR #4** `Serebro1:develop` -> `develop`) — интеграция наработок Этапа 1 в общую ветку `develop`.
+  - Ветка `docs/agents-guidelines-and-history` — добавление [AGENTS.md](../AGENTS.md) с правилами Git Flow, чек-листом проверок, стандартами кода и обязательными скилами (`codegraph`, `ponytail`, `ponytail-review`, `git`, `github-pr-status`, `browser-automation`, `workflows`), а также обновление [`.gitignore`](../.gitignore) (исключение `.codegraph/`) и `docs/DEVELOPMENT_HISTORY.md`.
 
-При возобновлении работы от текущего коммита `develop` (`af5d1ce`) выполняются следующие этапы по [09_GIT_FLOW_AND_PR_HISTORY.md](guidelines/09_GIT_FLOW_AND_PR_HISTORY.md):
+---
 
-1. **Завершение Этапа 1 (Сервисы ядра и REST API v1)**:
-   - Доработка сервисного слоя `backend/apps/core/services/` (`PricingService`, `RoutingService`, `OrderService`) и команды `seed_initial_data`.
-   - Ветка `feature/US-03-rest-api-v1` -> реализация `backend/api/` (`serializers.py`, `permissions.py`, `views.py`, `urls.py`) -> Merge PR #4 в `develop`.
-2. **Этап 2 (Клиентское веб-приложение — Модуль 4)**:
-   - Ветка `feature/US-01-US-04-US-08-client-web-portal` -> реализация `backend/apps/web/`, адаптивных шаблонов `backend/templates/` на Bootstrap 5 и скриптов `backend/static/js/status_poller.js` (опрос каждые 5 сек) -> Merge PR #5 в `develop`.
-3. **Этап 3 (Десктопное приложение сотрудника и Оборудование — Модули 5 и 6)**:
-   - Ветка `feature/US-07-hardware-camera-printer` -> `desktop/hardware/` (`UsbCameraService`, `DocumentCropper`, `WindowsPrinterService`) -> Merge PR #6 в `develop`.
-   - Ветка `feature/US-03-US-05-US-06-desktop-client` -> `desktop/api_client/`, `desktop/presenters/`, `desktop/views/`, `desktop/main.py` -> Merge PR #7 в `develop`.
-4. **Этап 4 (Инфраструктура, Гайд по запуску контейнеров и `.exe`, Тесты — Модуль 7)**:
-   - Ветка `feature/FTR-7-deploy-ci-and-run-guide` -> `deploy/` (`Dockerfile.backend`, `docker-compose.yml`, `nginx.conf`, `backup_db.sh`, `YouPhoto.spec`), `.github/workflows/ci.yml` и подробная документация по запуску Docker-контейнеров и сборке/запуску `YouPhoto.exe` -> Merge PR #8 в `develop`.
-   - Ветка `feature/US-01-US-08-qa-pytest-suite` -> `tests/unit/`, `tests/integration/`, `tests/desktop/` -> Merge PR #9 в `develop`.
-5. **Этап 5 (Релиз `v1.0.0` — Веха M6)**:
-   - Финальная проверка `python backend/manage.py migrate`, `ruff check .`, `pytest` (100% зеленые тесты) и слияние `develop -> main` с тегом `v1.0.0`.
+## 4. Дорожная карта оставшихся этапов (от актуальной ветки `develop`)
+
+При продолжении разработки от актуального состояния ветки `develop` (после **PR #4** `0f3e487` и текущего PR по `AGENTS.md`) выполняются следующие этапы по [09_GIT_FLOW_AND_PR_HISTORY.md](guidelines/09_GIT_FLOW_AND_PR_HISTORY.md):
+
+1. **Завершение Этапа 1 (Сервисы ядра и REST API v1):**
+   - Реализация сервисного слоя `backend/apps/core/services/` (`PricingService`, `RoutingService`, `OrderService`) и management-команды `seed_initial_data`.
+   - Ветка `feature/US-03-rest-api-v1` -> реализация `backend/api/` (`serializers.py`, `permissions.py`, `views.py`, `urls.py`) -> PR в `develop`.
+2. **Этап 2 (Клиентское веб-приложение — Модуль 4):**
+   - Ветка `feature/US-01-US-04-US-08-client-web-portal` -> реализация `backend/apps/web/`, адаптивных шаблонов `backend/templates/` на Bootstrap 5 и скриптов `backend/static/js/status_poller.js` (опрос каждые 5 сек) -> PR в `develop`.
+3. **Этап 3 (Десктопное приложение сотрудника и Оборудование — Модули 5 и 6):**
+   - Ветка `feature/US-07-hardware-camera-printer` -> `desktop/hardware/` (`UsbCameraService`, `DocumentCropper`, `WindowsPrinterService`) -> PR в `develop`.
+   - Ветка `feature/US-03-US-05-US-06-desktop-client` -> `desktop/api_client/`, `desktop/presenters/`, `desktop/views/`, `desktop/main.py` -> PR в `develop`.
+4. **Этап 4 (Инфраструктура, Гайд по запуску контейнеров и `.exe`, Тесты — Модуль 7):**
+   - Ветка `feature/FTR-7-deploy-ci-and-run-guide` -> `deploy/` (`Dockerfile.backend`, `docker-compose.yml`, `nginx.conf`, `backup_db.sh`, `YouPhoto.spec`), `.github/workflows/ci.yml` и руководство по запуску Docker-контейнеров и сборке `YouPhoto.exe` -> PR в `develop`.
+   - Ветка `feature/US-01-US-08-qa-pytest-suite` -> `tests/unit/`, `tests/integration/`, `tests/desktop/` -> PR в `develop`.
+5. **Этап 5 (Релиз `v1.0.0` — Веха M6):**
+   - Финальная проверка `python backend/manage.py migrate`, `ruff check .`, `pytest` (100% зелёные тесты) и релизный PR в `main` с тегом `v1.0.0`.
