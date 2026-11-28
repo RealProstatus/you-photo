@@ -1,4 +1,4 @@
-"""DTO для модуля файлового хранилища."""
+"""Data transfer objects for the file storage module."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FileMetadata:
-    """Метаданные загруженного и сохраненного файла фотографии."""
+    """Immutable metadata of an uploaded and stored photo file."""
 
     file_key: str
     original_name: str

@@ -1,4 +1,4 @@
-"""Сервис объектного/локального хранения фотографий (IFileStorage и MinioFileStorage)."""
+"""Object and local photo storage service (IFileStorage and MinioFileStorage)."""
 
 from __future__ import annotations
 
@@ -25,11 +25,19 @@ _SAFE_STEM_RE = re.compile(r"[^A-Za-z0-9_-]+")
 
 
 class IFileStorage(ABC):
-    """Абстрактный интерфейс хранилища файлов фотографий."""
+    """Abstract interface for photo file storage."""
 
     @abstractmethod
     def upload_photo(self, file_bytes: bytes, filename: str) -> FileMetadata:
-        """Валидирует и сохраняет фотографию в хранилище."""
+        """Validate and store a photo file in storage.
+
+        Args:
+            file_bytes: Raw binary contents of the photo.
+            filename: Original filename including extension.
+
+        Returns:
+            Metadata of the stored file.
+        """
 
     @abstractmethod
     def get_download_url(
@@ -38,19 +46,49 @@ class IFileStorage(ABC):
         ttl_seconds: int = 3600,
         photo_id: str | UUID | None = None,
     ) -> str:
-        """Возвращает URL для скачивания файла."""
+        """Return a download URL for a stored file.
+
+        Args:
+            file_key: Storage key of the file.
+            ttl_seconds: Presigned URL expiration time in seconds.
+            photo_id: Optional ``PhotoFile`` UUID for local fallback URLs.
+
+        Returns:
+            Download URL string.
+        """
 
     @abstractmethod
     def get_file_bytes(self, file_key: str) -> bytes:
-        """Возвращает бинарное содержимое файла из хранилища."""
+        """Return raw binary contents of a file from storage.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            Raw file bytes.
+        """
 
     @abstractmethod
     def delete_photo(self, file_key: str) -> bool:
-        """Удаляет файл из хранилища. Возвращает True при удалении, False если не найден."""
+        """Delete a file from storage.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            ``True`` if deleted, ``False`` if the file was not found.
+        """
 
     @abstractmethod
     def exists(self, file_key: str) -> bool:
-        """Проверяет наличие файла в хранилище."""
+        """Check whether a file exists in storage.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            ``True`` if the file exists, ``False`` otherwise.
+        """
 
     def save_file(
         self,
@@ -58,21 +96,44 @@ class IFileStorage(ABC):
         filename: str,
         content_type: str = "",
     ) -> FileMetadata:
-        """Синоним upload_photo для совместимости с контрактом core <-> storage."""
+        """Alias for ``upload_photo`` for core-to-storage contract compatibility.
+
+        Args:
+            file_bytes: Raw binary contents of the photo.
+            filename: Original filename including extension.
+            content_type: Unused MIME type parameter kept for signature compatibility.
+
+        Returns:
+            Metadata of the stored file.
+        """
         del content_type
         return self.upload_photo(file_bytes, filename)
 
     def read_file(self, file_key: str) -> bytes:
-        """Синоним get_file_bytes для совместимости с контрактом core <-> storage."""
+        """Alias for ``get_file_bytes`` for core-to-storage contract compatibility.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            Raw file bytes.
+        """
         return self.get_file_bytes(file_key)
 
     def delete_file(self, file_key: str) -> bool:
-        """Синоним delete_photo для совместимости с контрактом core <-> storage."""
+        """Alias for ``delete_photo`` for core-to-storage contract compatibility.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            ``True`` if deleted, ``False`` if the file was not found.
+        """
         return self.delete_photo(file_key)
 
 
 class MinioFileStorage(IFileStorage):
-    """Реализация хранилища с поддержкой MinIO/S3 и локального fallback в MEDIA_ROOT/storage/."""
+    """Storage backend supporting MinIO/S3 and local fallback in ``MEDIA_ROOT/storage/``."""
 
     def __init__(
         self,
@@ -88,6 +149,20 @@ class MinioFileStorage(IFileStorage):
         validator: FileValidator | None = None,
         s3_client: Any = None,
     ) -> None:
+        """Initialize MinIO/S3 or local filesystem storage backend.
+
+        Args:
+            use_minio: Whether to use MinIO/S3 instead of local filesystem storage.
+            endpoint_url: MinIO/S3 endpoint URL.
+            access_key: S3 access key ID.
+            secret_key: S3 secret access key.
+            bucket_name: Target S3 bucket name.
+            use_ssl: Whether to use TLS for S3 connections.
+            media_root: Base media directory for local storage fallback.
+            media_url: Base media URL prefix for local download links.
+            validator: Optional custom ``FileValidator`` instance.
+            s3_client: Optional preconfigured boto3 S3 client (useful for testing).
+        """
         self.use_minio = (
             bool(getattr(settings, "USE_MINIO", False))
             if use_minio is None
@@ -208,6 +283,18 @@ class MinioFileStorage(IFileStorage):
             return None
 
     def upload_photo(self, file_bytes: bytes, filename: str) -> FileMetadata:
+        """Validate and upload a photo to MinIO/S3 or local storage.
+
+        Args:
+            file_bytes: Raw binary contents of the photo.
+            filename: Original filename including extension.
+
+        Returns:
+            Metadata of the uploaded file.
+
+        Raises:
+            FileValidationError: If the file fails format or size validation.
+        """
         file_format, mime_type = self.validator.validate_and_detect(file_bytes, filename)
         file_key, original_name = self._build_file_key(filename)
 
@@ -238,6 +325,16 @@ class MinioFileStorage(IFileStorage):
         ttl_seconds: int = 3600,
         photo_id: str | UUID | None = None,
     ) -> str:
+        """Generate a download URL for a stored photo.
+
+        Args:
+            file_key: Storage key of the file.
+            ttl_seconds: Presigned URL expiration time in seconds (MinIO/S3 mode).
+            photo_id: Optional ``PhotoFile`` UUID used to build local API download URLs.
+
+        Returns:
+            Presigned S3 URL or local download endpoint/media URL.
+        """
         if self.use_minio:
             self._ensure_bucket()
             return str(
@@ -256,6 +353,18 @@ class MinioFileStorage(IFileStorage):
         return f"{self.media_url.rstrip('/')}/storage/{clean_key}"
 
     def get_file_bytes(self, file_key: str) -> bytes:
+        """Read and return raw bytes of a stored photo.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            Raw binary contents of the file.
+
+        Raises:
+            FileNotFoundError: If the file does not exist in storage.
+            ValueError: If ``file_key`` is invalid or escapes local storage root.
+        """
         if self.use_minio:
             try:
                 response = self._get_s3_client().get_object(
@@ -275,6 +384,14 @@ class MinioFileStorage(IFileStorage):
         return target.read_bytes()
 
     def delete_photo(self, file_key: str) -> bool:
+        """Delete a photo from MinIO/S3 or local storage.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            ``True`` if the file existed and was deleted, ``False`` otherwise.
+        """
         if self.use_minio:
             if not self.exists(file_key):
                 return False
@@ -288,6 +405,14 @@ class MinioFileStorage(IFileStorage):
         return True
 
     def exists(self, file_key: str) -> bool:
+        """Check whether a photo exists in MinIO/S3 or local storage.
+
+        Args:
+            file_key: Storage key of the file.
+
+        Returns:
+            ``True`` if the file exists, ``False`` otherwise.
+        """
         if self.use_minio:
             try:
                 self._get_s3_client().head_object(Bucket=self.bucket_name, Key=file_key)

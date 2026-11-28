@@ -1,4 +1,4 @@
-"""Валидатор загружаемых фотографий (форматы JPEG, PNG, HEIC, TIFF и размер до 50 МБ)."""
+"""Validator for uploaded photos (JPEG, PNG, HEIC, TIFF up to 50 MB)."""
 
 from __future__ import annotations
 
@@ -49,13 +49,19 @@ _IMAGE_DECODE_ERRORS: tuple[type[BaseException], ...] = (
 
 
 class FileValidator:
-    """Проверяет размер, расширение и целостность сигнатуры изображений."""
+    """Validates image file size, extension, and binary signature integrity."""
 
     allowed_extensions: set[str]
     allowed_formats: set[str]
     max_size_bytes: int
 
     def __init__(self, max_size_bytes: int | None = None) -> None:
+        """Initialize the validator with an optional maximum file size limit.
+
+        Args:
+            max_size_bytes: Maximum allowed file size in bytes. Defaults to
+                ``MAX_UPLOAD_SIZE_MB * 1024 * 1024`` (50 MB).
+        """
         self.allowed_extensions = set(ALLOWED_EXTENSIONS)
         self.allowed_formats = set(ALLOWED_FORMATS)
         if max_size_bytes is None:
@@ -74,7 +80,19 @@ class FileValidator:
         return upper
 
     def validate_and_detect(self, file_bytes: bytes, filename: str) -> tuple[str, str]:
-        """Валидирует файл и возвращает кортеж (нормализованный формат, MIME-тип)."""
+        """Validate a file and detect its normalized format and MIME type.
+
+        Args:
+            file_bytes: Raw binary contents of the uploaded file.
+            filename: Original filename including extension.
+
+        Returns:
+            Tuple of ``(normalized_format, mime_type)``.
+
+        Raises:
+            FileValidationError: If the file is empty, exceeds the size limit,
+                has an unsupported extension/format, or fails image decoding.
+        """
         if not file_bytes:
             raise FileValidationError(f"Загруженный файл пуст. {_ALLOWED_FORMATS_HINT}")
 
@@ -114,6 +132,17 @@ class FileValidator:
         return normalized_format, FORMAT_TO_MIME[normalized_format]
 
     def validate(self, file_bytes: bytes, filename: str) -> str:
-        """Проверяет файл и возвращает нормализованный формат (JPEG, PNG, HEIC, TIFF)."""
+        """Validate a file and return its normalized image format.
+
+        Args:
+            file_bytes: Raw binary contents of the uploaded file.
+            filename: Original filename including extension.
+
+        Returns:
+            Normalized image format (``JPEG``, ``PNG``, ``HEIC``, or ``TIFF``).
+
+        Raises:
+            FileValidationError: If validation fails.
+        """
         file_format, _ = self.validate_and_detect(file_bytes, filename)
         return file_format

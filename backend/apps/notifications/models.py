@@ -1,4 +1,4 @@
-"""Модели модуля уведомлений."""
+"""Models for the notifications module."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from django.utils import timezone
 
 
 class TelegramBindingToken(models.Model):
-    """Одноразовый криптографический токен привязки пользователя к Telegram-боту."""
+    """One-time cryptographic token for binding a user account to the Telegram bot."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
@@ -45,10 +45,18 @@ class TelegramBindingToken(models.Model):
         ordering = ("-created_at",)
 
     def is_valid(self, now: datetime | None = None) -> bool:
-        """Проверяет, что токен не использован и срок его действия не истек."""
+        """Check whether the token is unused and has not expired.
+
+        Args:
+            now: Optional reference timestamp. Defaults to ``timezone.now()``.
+
+        Returns:
+            ``True`` if the token can still be redeemed, ``False`` otherwise.
+        """
         current_time = now or timezone.now()
         return not self.is_used and self.used_at is None and self.expires_at > current_time
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the binding token."""
         status_label = "использован" if self.is_used else "активен"
         return f"Токен привязки для {self.user} ({status_label})"

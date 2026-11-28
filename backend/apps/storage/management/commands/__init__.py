@@ -1,1 +1,1 @@
-"""Модуль Django management-команд для очистки хранилища."""
+"""Django management commands for storage cleanup."""

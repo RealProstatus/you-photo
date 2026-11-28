@@ -1,1 +1,1 @@
-"""Слой представлений PySide6 (MainWindow, вкладки очереди, фото на документы, справочники)."""
+"""PySide6 view layer (MainWindow, queue tabs, document photo capture, and reference tabs)."""

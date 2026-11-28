@@ -1,1 +1,1 @@
-"""Модуль 4: Client Web Application — клиентский веб-портал на Django Templates и Bootstrap 5."""
+"""Module 4: Client Web Application — Django Templates and Bootstrap 5 portal."""

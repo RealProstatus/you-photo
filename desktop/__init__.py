@@ -1,1 +1,1 @@
-"""Модуль 5: Employee Desktop Application — толстый клиент сотрудника салона на PySide6."""
+"""Module 5: Employee Desktop Application — salon employee PySide6 desktop client."""

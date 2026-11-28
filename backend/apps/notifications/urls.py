@@ -1,4 +1,4 @@
-"""Маршруты API уведомлений и привязки Telegram."""
+"""URL routes for notifications and Telegram binding APIs."""
 
 from django.urls import path
 

@@ -1,1 +1,1 @@
-"""Адаптер REST API клиента (RestApiClient -> IBackendApi) для десктопного приложения."""
+"""REST API client adapter (RestApiClient -> IBackendApi) for the desktop application."""
