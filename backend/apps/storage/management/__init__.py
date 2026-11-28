@@ -1,1 +1,1 @@
-"""Management-команды приложения apps.storage."""
+"""Management commands for the apps.storage application."""

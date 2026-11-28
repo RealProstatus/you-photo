@@ -1,1 +1,1 @@
-"""Интеграционные тесты пользовательских сценариев US-01..US-08, безопасности и производительности."""
+"""Integration tests for user stories US-01..US-08, security, and performance."""

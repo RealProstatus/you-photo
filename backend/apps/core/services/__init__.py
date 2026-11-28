@@ -1,1 +1,1 @@
-"""Сервисный слой модуля Backend Core (OrderService, RoutingService, PricingService)."""
+"""Service layer of the Backend Core module (OrderService, RoutingService, PricingService)."""

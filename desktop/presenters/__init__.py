@@ -1,1 +1,1 @@
-"""Слой презентеров MVP (OrderQueuePresenter, DocumentPhotoPresenter, SalonAdminPresenter)."""
+"""MVP presenter layer (OrderQueuePresenter, DocumentPhotoPresenter, SalonAdminPresenter)."""

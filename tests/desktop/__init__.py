@@ -1,1 +1,1 @@
-"""Тесты десктопного приложения сотрудника (PySide6 MVP, импорт с камеры и печать US-07)."""
+"""Desktop employee application tests (PySide6 MVP, camera import, and US-07 printing)."""

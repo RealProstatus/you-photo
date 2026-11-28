@@ -47,7 +47,8 @@ feature/*      ●    ●    ●    ●    ●   (PR в develop через --no-
 | PR #3 (локальный merge) | `feature/US-01-US-08-e2e-test-suite` | `69dcc39` -> `af5d1ce` | Пакет из 143 сквозных приёмочных тестов `tests/e2e/` (`Tier 1–4`, `US-01..US-08`). |
 | Docs & Sync | `develop` | `4a07be6`, `decb999`, `6de73a7`, `72748cc` | Фиксация истории разработки, замена абсолютных локальных путей на относительные, уточнение ссылок. |
 | PR #4 (GitHub) | `Serebro1:develop` -> `develop` | `0f3e487` | Интеграция Этапа 1 (`Core`, `Storage`, `Notifications`, `E2E` и обновлённой документации) в `origin/develop`. |
-| Docs & Agent Guidelines | `docs/agents-guidelines-and-history` -> `develop` | *(текущий PR)* | Добавление [AGENTS.md](../AGENTS.md), исключение `.codegraph/` в [`.gitignore`](../.gitignore) и актуализация `DEVELOPMENT_HISTORY.md`. |
+| PR #5 (GitHub) | `docs/agents-guidelines-and-history` -> `develop` | `270f7e2` | Добавление [AGENTS.md](../AGENTS.md), исключение `.codegraph/` в [`.gitignore`](../.gitignore) и актуализация `DEVELOPMENT_HISTORY.md`. |
+| PR #6 (GitHub) | `refactor/agents-code-standards` -> `develop` | *(текущий PR)* | Рефакторинг существующего кода (`config`, `core`, `storage`, `notifications`) под стандарты [AGENTS.md](../AGENTS.md): Google-style docstrings и комментарии на английском, строгая типизация и сохранение русских UI-строк (`S-USE-01`). |
 ---
 
 ## 3. Подробное описание выполненных этапов разработки
@@ -127,7 +128,8 @@ feature/*      ●    ●    ●    ●    ●   (PR в develop через --no-
   - `4a07be6` — фиксация журнала разработки `docs/DEVELOPMENT_HISTORY.md`.
   - `e49261a`..`2152f2c`, `decb999`, `6de73a7`, `72748cc` — перевод ссылок в документации на относительные пути и уточнение структуры каталога документации.
   - `0f3e487` (**PR #4** `Serebro1:develop` -> `develop`) — интеграция наработок Этапа 1 в общую ветку `develop`.
-  - Ветка `docs/agents-guidelines-and-history` — добавление [AGENTS.md](../AGENTS.md) с правилами Git Flow, чек-листом проверок, стандартами кода и обязательными скилами (`codegraph`, `ponytail`, `ponytail-review`, `git`, `github-pr-status`, `browser-automation`, `workflows`), а также обновление [`.gitignore`](../.gitignore) (исключение `.codegraph/`) и `docs/DEVELOPMENT_HISTORY.md`.
+  - `270f7e2` (**PR #5** `docs/agents-guidelines-and-history` -> `develop`) — добавление [AGENTS.md](../AGENTS.md) с правилами Git Flow, чек-листом проверок, стандартами кода и обязательными скилами (`codegraph`, `ponytail`, `ponytail-review`, `git`, `github-pr-status`, `browser-automation`, `workflows`), а также обновление [`.gitignore`](../.gitignore) (исключение `.codegraph/`) и `docs/DEVELOPMENT_HISTORY.md`.
+  - Ветка `refactor/agents-code-standards` (**PR #6**) — рефакторинг существующих модулей (`backend/config/`, `backend/apps/core/`, `backend/apps/storage/`, `backend/apps/notifications/` и пакетных `__init__.py`) в соответствии с разделом 6 [AGENTS.md](../AGENTS.md): приведение всех модульных, классовых и публичных методовых докстрингов к единому стандарту **Google-style на английском языке**, перевод комментариев в коде на английский язык, дополнение аннотаций типов Python 3.11+ при 100% сохранении русскоязычных пользовательских строк, статусов, сообщений об ошибках валидации и уведомлений Telegram (`S-USE-01`).
 
 ---
 

@@ -1,4 +1,4 @@
-"""Фоновая задача очистки файлов фотографий с истекшим сроком хранения."""
+"""Background cleanup job for expired photo files."""
 
 from __future__ import annotations
 
@@ -17,13 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class RetentionCleanupJob:
-    """Удаляет исходные файлы фотографий через 30 дней после завершения заказа."""
+    """Deletes original photo files 30 days after order completion."""
 
     def __init__(
         self,
         file_storage: IFileStorage | None = None,
         retention_days: int | None = None,
     ) -> None:
+        """Initialize the retention cleanup job.
+
+        Args:
+            file_storage: Storage backend used to delete expired files.
+            retention_days: Number of days to retain files after completion.
+                Defaults to ``settings.FILE_RETENTION_DAYS`` (30).
+
+        Raises:
+            ValueError: If ``retention_days`` is negative.
+        """
         self.file_storage = file_storage or MinioFileStorage()
         if retention_days is None:
             self.retention_days = int(getattr(settings, "FILE_RETENTION_DAYS", 30))
@@ -33,7 +43,11 @@ class RetentionCleanupJob:
             raise ValueError("Срок хранения файлов не может быть отрицательным.")
 
     def purge_expired_photos(self) -> int:
-        """Удаляет просроченные файлы из хранилища, сохраняя записи заказа и метаданных в БД."""
+        """Delete expired photo files from storage while keeping DB order records.
+
+        Returns:
+            Number of photo files deleted during this run.
+        """
         now = timezone.now()
         cutoff = now - timedelta(days=self.retention_days)
         expired_photos = (

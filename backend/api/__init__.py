@@ -1,1 +1,1 @@
-"""Пакет REST API (IBackendApi) системы YouPhoto."""
+"""REST API package (IBackendApi) for the YouPhoto system."""

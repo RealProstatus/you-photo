@@ -1,17 +1,22 @@
+"""Shared domain enums and allowed order status transitions for YouPhoto.
+
+Aligned with ``backend_core_module.puml``, ``camera_module.puml``, and section 5.2
+of the functional specification.
 """
-Единые перечисления и таблица допустимых переходов статусов заказа системы «YouPhoto».
-Соответствует backend_core_module.puml, camera_module.puml и п. 5.2 Функциональной спецификации.
-"""
+
 from enum import StrEnum
 
 
 class UserRole(StrEnum):
+    """System user roles governing access control (S-SEC-03)."""
+
     CLIENT = "CLIENT"
     MANAGER = "MANAGER"
     ADMIN = "ADMIN"
 
     @classmethod
     def choices(cls) -> list[tuple[str, str]]:
+        """Return Django field choices with Russian display labels."""
         return [
             (cls.CLIENT, "Клиент"),
             (cls.MANAGER, "Менеджер"),
@@ -20,11 +25,14 @@ class UserRole(StrEnum):
 
 
 class OrderType(StrEnum):
+    """Order origin channel (online portal vs. in-salon document photo)."""
+
     ONLINE = "ONLINE"
     IN_SALON = "IN_SALON"
 
     @classmethod
     def choices(cls) -> list[tuple[str, str]]:
+        """Return Django field choices with Russian display labels."""
         return [
             (cls.ONLINE, "Онлайн"),
             (cls.IN_SALON, "В салоне"),
@@ -32,6 +40,8 @@ class OrderType(StrEnum):
 
 
 class OrderStatus(StrEnum):
+    """Canonical 10-state lifecycle of a YouPhoto order."""
+
     NEW = "NEW"
     PENDING_ROUTING = "PENDING_ROUTING"
     ASSIGNED_TO_SALON = "ASSIGNED_TO_SALON"
@@ -45,10 +55,12 @@ class OrderStatus(StrEnum):
 
     @classmethod
     def choices(cls) -> list[tuple[str, str]]:
+        """Return Django field choices with Russian display labels."""
         return [(status.value, ORDER_STATUS_LABELS_RU[status]) for status in cls]
 
     @property
     def label_ru(self) -> str:
+        """Return the Russian UI display label for this status."""
         return ORDER_STATUS_LABELS_RU[self]
 
 
@@ -65,7 +77,7 @@ ORDER_STATUS_LABELS_RU: dict[OrderStatus, str] = {
     OrderStatus.COMPLETED: "Завершен",
 }
 
-# Граф допустимых переходов статусов согласно п. 5.2 Функциональной спецификации
+# Allowed order status transition graph per section 5.2 of the functional specification.
 ALLOWED_STATUS_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
     OrderStatus.NEW: {
         OrderStatus.ASSIGNED_TO_SALON,
@@ -76,42 +88,44 @@ ALLOWED_STATUS_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
     },
     OrderStatus.ASSIGNED_TO_SALON: {
         OrderStatus.IN_PROGRESS,
-        OrderStatus.ASSIGNED_TO_SALON,  # Ручное переназначение администратором (US-02 3a)
-        OrderStatus.PENDING_ROUTING,    # Снятие оборудования/услуги (US-05 4a)
+        OrderStatus.ASSIGNED_TO_SALON,  # Manual reassignment by administrator (US-02 3a).
+        OrderStatus.PENDING_ROUTING,  # Equipment or service removed from salon (US-05 4a).
     },
     OrderStatus.IN_PROGRESS: {
         OrderStatus.PRINTING,
         OrderStatus.FINISHING,
         OrderStatus.NEEDS_CLARIFICATION,
-        OrderStatus.PENDING_ROUTING,    # Неисправность оборудования (US-03 1a)
+        OrderStatus.PENDING_ROUTING,  # Equipment failure during processing (US-03 1a).
     },
     OrderStatus.PRINTING: {
         OrderStatus.FINISHING,
-        OrderStatus.READY_FOR_PICKUP,   # Когда салон-исполнитель == салон выдачи
-        OrderStatus.IN_TRANSIT,         # Когда салон-исполнитель != салон выдачи
+        OrderStatus.READY_FOR_PICKUP,  # When assigned salon == pickup salon.
+        OrderStatus.IN_TRANSIT,  # When assigned salon != pickup salon.
         OrderStatus.NEEDS_CLARIFICATION,
     },
     OrderStatus.FINISHING: {
-        OrderStatus.READY_FOR_PICKUP,   # Когда салон-исполнитель == салон выдачи
-        OrderStatus.IN_TRANSIT,         # Когда салон-исполнитель != салон выдачи
+        OrderStatus.READY_FOR_PICKUP,  # When assigned salon == pickup salon.
+        OrderStatus.IN_TRANSIT,  # When assigned salon != pickup salon.
         OrderStatus.NEEDS_CLARIFICATION,
     },
     OrderStatus.IN_TRANSIT: {
         OrderStatus.READY_FOR_PICKUP,
-        OrderStatus.NEEDS_CLARIFICATION,  # Заказ пришел поврежденным или неполным (US-06 2a)
+        OrderStatus.NEEDS_CLARIFICATION,  # Order arrived damaged or incomplete (US-06 2a).
     },
     OrderStatus.READY_FOR_PICKUP: {
         OrderStatus.COMPLETED,
-        OrderStatus.NEEDS_CLARIFICATION,  # Брак при получении клиентом (US-06 7a)
+        OrderStatus.NEEDS_CLARIFICATION,  # Defect spotted during customer pickup (US-06 7a).
     },
     OrderStatus.NEEDS_CLARIFICATION: {
         OrderStatus.IN_PROGRESS,
     },
-    OrderStatus.COMPLETED: set(),         # Конечный статус
+    OrderStatus.COMPLETED: set(),  # Terminal status.
 }
 
 
 class DocumentStandard(StrEnum):
+    """Supported document photo standards for in-salon capture and cropping (US-07)."""
+
     RF_PASSPORT_35x45 = "RF_PASSPORT_35x45"
     FOREIGN_PASSPORT_35x45 = "FOREIGN_PASSPORT_35x45"
     SCHENGEN_VISA_35x45 = "SCHENGEN_VISA_35x45"
@@ -119,6 +133,7 @@ class DocumentStandard(StrEnum):
 
     @classmethod
     def choices(cls) -> list[tuple[str, str]]:
+        """Return Django field choices with Russian display labels."""
         return [
             (cls.RF_PASSPORT_35x45, "Паспорт РФ (35×45 мм)"),
             (cls.FOREIGN_PASSPORT_35x45, "Загранпаспорт (35×45 мм)"),

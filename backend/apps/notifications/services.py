@@ -1,4 +1,4 @@
-"""Сервисы привязки Telegram-аккаунта и отправки уведомлений через Apprise."""
+"""Services for Telegram account binding and sending notifications via Apprise."""
 
 from __future__ import annotations
 
@@ -23,13 +23,20 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramBotBinder:
-    """Управляет одноразовыми токенами и привязкой аккаунта клиента к Telegram."""
+    """Manages one-time tokens and binds client accounts to Telegram."""
 
     def __init__(
         self,
         token_ttl_minutes: int | None = None,
         bot_username: str | None = None,
     ) -> None:
+        """Initialize the Telegram binder with token TTL and bot username.
+
+        Args:
+            token_ttl_minutes: Token lifetime in minutes. Defaults to
+                ``settings.TELEGRAM_BIND_TOKEN_TTL_MINUTES`` (30).
+            bot_username: Telegram bot username without leading ``@``.
+        """
         if token_ttl_minutes is None:
             self.token_ttl_minutes = int(getattr(settings, "TELEGRAM_BIND_TOKEN_TTL_MINUTES", 30))
         else:
@@ -52,7 +59,14 @@ class TelegramBotBinder:
         raise ValueError("Ожидался объект пользователя или идентификатор UUID.")
 
     def create_binding_token(self, user_or_id: Any) -> TelegramBindingToken:
-        """Создает и сохраняет в БД одноразовый токен привязки Telegram."""
+        """Create and persist a one-time Telegram binding token in the database.
+
+        Args:
+            user_or_id: User model instance or primary key UUID/string.
+
+        Returns:
+            Newly created ``TelegramBindingToken`` instance.
+        """
         user = self._resolve_user(user_or_id)
         now = timezone.now()
         expires_at = now + timedelta(minutes=self.token_ttl_minutes)
@@ -64,11 +78,25 @@ class TelegramBotBinder:
         )
 
     def create_token(self, user_or_id: Any) -> str:
-        """Создает одноразовый токен привязки и возвращает его строковое значение."""
+        """Create a one-time binding token and return its string value.
+
+        Args:
+            user_or_id: User model instance or primary key UUID/string.
+
+        Returns:
+            Generated URL-safe token string.
+        """
         return self.create_binding_token(user_or_id).token
 
     def generate_binding_link(self, user_or_id: Any) -> str:
-        """Генерирует глубокую ссылку на Telegram-бота с одноразовым токеном."""
+        """Generate a Telegram bot deep link with a one-time binding token.
+
+        Args:
+            user_or_id: User model instance or primary key UUID/string.
+
+        Returns:
+            ``https://t.me/<bot_username>?start=<token>`` deep link URL.
+        """
         token_value = self.create_token(user_or_id)
         return f"https://t.me/{self.bot_username}?start={token_value}"
 
@@ -77,7 +105,15 @@ class TelegramBotBinder:
         token: str | TelegramBindingToken,
         chat_id: str | int,
     ) -> bool:
-        """Атомарно проверяет токен и привязывает chat_id Telegram к пользователю."""
+        """Atomically validate a binding token and link ``chat_id`` to the user.
+
+        Args:
+            token: Binding token string or ``TelegramBindingToken`` instance.
+            chat_id: Telegram chat identifier received from the bot webhook.
+
+        Returns:
+            ``True`` if the token was valid and the account was bound, ``False`` otherwise.
+        """
         token_str = (
             token.token
             if isinstance(token, TelegramBindingToken)
@@ -106,7 +142,7 @@ class TelegramBotBinder:
 
 
 class INotificationService(ABC):
-    """Абстрактный интерфейс сервиса уведомлений."""
+    """Abstract interface for the notification service."""
 
     @abstractmethod
     def notify_status_changed(
@@ -116,7 +152,17 @@ class INotificationService(ABC):
         new_status_label: str,
         comment: str = "",
     ) -> bool:
-        """Отправляет уведомление об изменении статуса заказа."""
+        """Send an order status change notification to a Telegram chat.
+
+        Args:
+            chat_id: Recipient Telegram chat ID.
+            order_number: Human-readable order number.
+            new_status_label: Localized Russian label of the new order status.
+            comment: Optional manager or system comment.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
 
     @abstractmethod
     def send_order_status_changed(
@@ -127,29 +173,64 @@ class INotificationService(ABC):
         new_status: str = "",
         comment: str = "",
     ) -> bool:
-        """Отправляет уведомление об изменении статуса заказа по объектам user и order."""
+        """Send an order status change notification using domain ``user`` and ``order`` objects.
+
+        Args:
+            user: Recipient user object.
+            order: Order object whose status changed.
+            old_status: Previous order status code.
+            new_status: New order status code.
+            comment: Optional comment included in the notification body.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
 
     @abstractmethod
     def send_pickup_reminder(self, *args: Any, **kwargs: Any) -> bool:
-        """Отправляет напоминание о готовности заказа к выдаче."""
+        """Send a reminder that an order is ready for pickup.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
 
     @abstractmethod
     def send_custom(self, message: NotificationMessage) -> bool:
-        """Отправляет произвольное уведомление."""
+        """Send an arbitrary notification message.
+
+        Args:
+            message: Notification payload containing recipient, title, and body.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
 
     @abstractmethod
     def generate_binding_link(self, user_or_id: Any) -> str:
-        """Генерирует ссылку для привязки Telegram-аккаунта."""
+        """Generate a deep link for binding a Telegram account.
+
+        Args:
+            user_or_id: User model instance or primary key UUID/string.
+
+        Returns:
+            Telegram bot deep link URL.
+        """
 
 
 class AppriseNotificationService(INotificationService):
-    """Реализация отправки уведомлений в Telegram через библиотеку Apprise."""
+    """Telegram notification sender powered by the Apprise library."""
 
     def __init__(
         self,
         bot_token: str | None = None,
         binder: TelegramBotBinder | None = None,
     ) -> None:
+        """Initialize the Apprise notification service.
+
+        Args:
+            bot_token: Telegram bot token. Defaults to ``settings.TELEGRAM_BOT_TOKEN``.
+            binder: Optional ``TelegramBotBinder`` instance for link generation.
+        """
         raw_token = (
             getattr(settings, "TELEGRAM_BOT_TOKEN", "")
             if bot_token is None
@@ -202,6 +283,14 @@ class AppriseNotificationService(INotificationService):
             return False
 
     def send_custom(self, message: NotificationMessage) -> bool:
+        """Send an arbitrary notification message via Apprise.
+
+        Args:
+            message: Notification payload containing recipient, title, and body.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
         return self._send(message)
 
     def notify_status_changed(
@@ -211,6 +300,17 @@ class AppriseNotificationService(INotificationService):
         new_status_label: str,
         comment: str = "",
     ) -> bool:
+        """Send a localized order status update message to a Telegram chat.
+
+        Args:
+            chat_id: Recipient Telegram chat ID.
+            order_number: Human-readable order number.
+            new_status_label: Localized Russian label of the new order status.
+            comment: Optional comment appended to the notification text.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
         clean_comment = str(comment or "").strip()
         body = f'Статус вашего заказа №{order_number} изменен на: "{new_status_label}".'
         if clean_comment:
@@ -231,6 +331,18 @@ class AppriseNotificationService(INotificationService):
         new_status: str = "",
         comment: str = "",
     ) -> bool:
+        """Send an order status update notification for domain ``user`` and ``order`` objects.
+
+        Args:
+            user: Recipient user object.
+            order: Order object whose status changed.
+            old_status: Unused previous order status code kept for interface compatibility.
+            new_status: Optional new order status code overriding ``order.status``.
+            comment: Optional comment appended to the notification text.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
         del old_status
         if user is None:
             return False
@@ -255,6 +367,18 @@ class AppriseNotificationService(INotificationService):
         )
 
     def send_pickup_reminder(self, *args: Any, **kwargs: Any) -> bool:
+        """Send a pickup reminder supporting both domain objects and raw parameters.
+
+        Supports either ``(user, order)`` or ``(chat_id, order_number, pickup_code, salon_address)``
+        positional/keyword arguments.
+
+        Args:
+            *args: Positional arguments matching one of the two supported signatures.
+            **kwargs: Keyword arguments matching one of the two supported signatures.
+
+        Returns:
+            ``True`` if delivered, ``False`` otherwise.
+        """
         is_domain_call = (
             "user" in kwargs
             or "order" in kwargs
@@ -306,4 +430,12 @@ class AppriseNotificationService(INotificationService):
         return self._send(message)
 
     def generate_binding_link(self, user_or_id: Any) -> str:
+        """Generate a Telegram bot deep link for binding a user account.
+
+        Args:
+            user_or_id: User model instance or primary key UUID/string.
+
+        Returns:
+            Telegram bot deep link URL.
+        """
         return self.binder.generate_binding_link(user_or_id)

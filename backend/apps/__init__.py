@@ -1,1 +1,1 @@
-"""Пакет приложений Django системы YouPhoto."""
+"""Django applications package for the YouPhoto system."""

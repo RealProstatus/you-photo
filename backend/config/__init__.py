@@ -1,1 +1,1 @@
-"""Пакет серверной конфигурации Django для системы заказов YouPhoto."""
+"""Django server configuration package for the YouPhoto order system."""

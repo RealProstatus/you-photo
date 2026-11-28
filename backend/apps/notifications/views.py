@@ -1,4 +1,4 @@
-"""DRF-представления для webhook-а и генерации ссылки привязки Telegram."""
+"""DRF views for Telegram webhook handling and binding link generation."""
 
 from __future__ import annotations
 
@@ -14,12 +14,22 @@ from apps.notifications.services import TelegramBotBinder
 
 
 class TelegramWebhookView(APIView):
-    """Публичный webhook для обработки команды `/start <token>` от Telegram-бота."""
+    """Public webhook for handling the ``/start <token>`` command from the Telegram bot."""
 
     authentication_classes = ()
     permission_classes = (AllowAny,)
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Process an incoming Telegram bot webhook or direct binding payload.
+
+        Args:
+            request: Incoming DRF request containing Telegram update or token/chat_id.
+            *args: Unused positional arguments.
+            **kwargs: Unused keyword arguments.
+
+        Returns:
+            JSON response indicating whether the Telegram account was bound.
+        """
         del args, kwargs
         payload = request.data if isinstance(request.data, dict) else {}
         message = payload.get("message") or payload.get("edited_message")
@@ -113,7 +123,7 @@ class TelegramWebhookView(APIView):
 
 
 class TelegramBindLinkView(APIView):
-    """Генерирует одноразовую ссылку для привязки Telegram текущему пользователю."""
+    """Generate a one-time deep link for binding Telegram to the current user."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -136,9 +146,29 @@ class TelegramBindLinkView(APIView):
         )
 
     def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Issue a one-time Telegram binding link via GET request.
+
+        Args:
+            request: Authenticated DRF request.
+            *args: Unused positional arguments.
+            **kwargs: Unused keyword arguments.
+
+        Returns:
+            JSON response with ``binding_link``, ``link``, and ``token``.
+        """
         del args, kwargs
         return self._issue_link(request)
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Issue a one-time Telegram binding link via POST request.
+
+        Args:
+            request: Authenticated DRF request.
+            *args: Unused positional arguments.
+            **kwargs: Unused keyword arguments.
+
+        Returns:
+            JSON response with ``binding_link``, ``link``, and ``token``.
+        """
         del args, kwargs
         return self._issue_link(request)

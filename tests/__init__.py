@@ -1,1 +1,1 @@
-"""Набор автоматизированных тестов PyTest проекта YouPhoto."""
+"""Automated PyTest suite for the YouPhoto project."""
