@@ -848,7 +848,7 @@ def test_t2_f4_in_transit_damaged_arrival_transitions_to_needs_clarification(
     api_client_factory: Any,
     upload_photo_via_api: Any,
 ) -> None:
-    """Verify US-06 2a: pickup-salon manager flags damaged IN_TRANSIT order as NEEDS_CLARIFICATION."""
+    """Verify US-06 2a: pickup-salon manager flags damaged IN_TRANSIT order."""
     from apps.core.models import Order
 
     c1_api = api_client_factory(

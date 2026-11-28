@@ -1,1 +1,1 @@
-"""Модульные тесты бизнес-логики, переходов статусов, маршрутизации, хранилища и уведомлений."""
+"""Unit tests for business logic, status transitions, routing, storage, and notifications."""
