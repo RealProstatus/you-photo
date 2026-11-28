@@ -1,4 +1,4 @@
-"""Корневая маршрутизация URL для проекта YouPhoto."""
+"""Root URL routing configuration for the YouPhoto project."""
 
 from __future__ import annotations
 

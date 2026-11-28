@@ -1,4 +1,4 @@
-"""Основные доменные модели системы заказов YouPhoto (UUID PK)."""
+"""Core domain models for the YouPhoto order system (UUID primary keys)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import hmac
 import uuid
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -25,7 +26,7 @@ from apps.core.exceptions import InvalidStatusTransitionError
 
 
 class Salon(models.Model):
-    """Фотосалон (точка выполнения и/или выдачи заказов)."""
+    """Photo salon serving as an order fulfillment and/or pickup point."""
 
     ACTIVE_LOAD_STATUSES = (
         OrderStatus.ASSIGNED_TO_SALON,
@@ -52,6 +53,7 @@ class Salon(models.Model):
         ordering = ("name",)
 
     def get_current_load(self) -> int:
+        """Return the number of active orders currently assigned to this salon."""
         if self._state.adding:
             return int(self.current_load or 0)
         if self.assigned_orders.exists():
@@ -59,16 +61,27 @@ class Salon(models.Model):
         return int(self.current_load or 0)
 
     def increment_load(self) -> None:
+        """Increment the cached salon load counter by one."""
         self.current_load = int(self.current_load or 0) + 1
         if not self._state.adding:
             self.save(update_fields=["current_load"])
 
     def decrement_load(self) -> None:
+        """Decrement the cached salon load counter by one, floored at zero."""
         self.current_load = max(0, int(self.current_load or 0) - 1)
         if not self._state.adding:
             self.save(update_fields=["current_load"])
 
     def can_fulfill(self, item: OrderItem) -> bool:
+        """Check whether this salon can fulfill a single order item.
+
+        Args:
+            item: Order item with service and print dimensions.
+
+        Returns:
+            ``True`` if the salon is active, offers the item's service, and has
+            operational equipment supporting the requested dimensions.
+        """
         if not self.is_active or self._state.adding or item is None or item.service_id is None:
             return False
         if (item.width_cm or 0) <= 0 or (item.height_cm or 0) <= 0:
@@ -83,6 +96,15 @@ class Salon(models.Model):
         return any(eq.supports_format(item.width_cm, item.height_cm) for eq in eq_qs)
 
     def can_fulfill_order(self, order: Order) -> bool:
+        """Check whether this salon can fulfill every item in an order.
+
+        Args:
+            order: Persisted ``Order`` instance.
+
+        Returns:
+            ``True`` if the order has at least one item and all items can be
+            fulfilled by this salon.
+        """
         if not self.is_active or self._state.adding or order is None or order._state.adding:
             return False
         items = list(order.items.select_related("service").all())
@@ -91,11 +113,12 @@ class Salon(models.Model):
         return all(self.can_fulfill(item) for item in items)
 
     def __str__(self) -> str:
+        """Return the salon display name and address."""
         return f"{self.name} ({self.address})"
 
 
 class UserManager(BaseUserManager):
-    """Менеджер пользователей с входом по email/телефону."""
+    """Custom user manager supporting email and phone authentication."""
 
     def create_user(
         self,
@@ -103,8 +126,23 @@ class UserManager(BaseUserManager):
         password: str | None = None,
         phone: str = "",
         name: str = "",
-        **extra_fields,
+        **extra_fields: Any,
     ) -> User:
+        """Create and persist a regular user.
+
+        Args:
+            email: User email address (normalized to lowercase).
+            password: Raw password; if ``None``, an unusable password is set.
+            phone: Contact phone number.
+            name: User display name.
+            **extra_fields: Additional model fields.
+
+        Returns:
+            The newly created ``User`` instance.
+
+        Raises:
+            ValueError: If ``email`` is empty.
+        """
         cleaned_email = str(email or "").strip()
         if not cleaned_email:
             raise ValueError("Email обязателен для создания пользователя.")
@@ -133,8 +171,23 @@ class UserManager(BaseUserManager):
         password: str | None = None,
         phone: str = "",
         name: str = "Администратор",
-        **extra_fields,
+        **extra_fields: Any,
     ) -> User:
+        """Create and persist a superuser with the ``ADMIN`` role.
+
+        Args:
+            email: Administrator email address.
+            password: Raw password.
+            phone: Contact phone number.
+            name: Administrator display name.
+            **extra_fields: Additional model fields.
+
+        Returns:
+            The newly created superuser ``User`` instance.
+
+        Raises:
+            ValueError: If ``is_staff`` or ``is_superuser`` is not ``True``.
+        """
         extra_fields.setdefault("role", UserRole.ADMIN)
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -156,7 +209,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Пользователь системы (Клиент, Менеджер салона, Администратор)."""
+    """System user account (Client, Salon Manager, or Administrator)."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=150, blank=True, default="", verbose_name="Имя")
@@ -204,25 +257,40 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ("email",)
 
     def has_role(self, role: UserRole | str) -> bool:
+        """Return whether the user holds the given role.
+
+        Args:
+            role: Role enum member or string value to compare against.
+
+        Returns:
+            ``True`` if the user's role matches ``role``.
+        """
         return self.role == str(role)
 
     def bind_telegram(self, chat_id: str) -> None:
+        """Bind or clear the user's Telegram chat identifier.
+
+        Args:
+            chat_id: Telegram chat ID string; blank clears the binding.
+        """
         cleaned = str(chat_id or "").strip()
         self.telegram_chat_id = cleaned or None
         if not self._state.adding:
             self.save(update_fields=["telegram_chat_id"])
 
     def get_telegram_chat_id(self) -> str:
+        """Return the bound Telegram chat ID or an empty string."""
         return self.telegram_chat_id or ""
 
     def __str__(self) -> str:
+        """Return the user's display name and email."""
         if self.name:
             return f"{self.name} ({self.email})"
         return self.email
 
 
 class Equipment(models.Model):
-    """Оборудование салона (принтер, плоттер, минилаб и др.)."""
+    """Salon production equipment (printer, plotter, minilab, etc.)."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     salon = models.ForeignKey(
@@ -243,6 +311,18 @@ class Equipment(models.Model):
         ordering = ("salon__name", "name")
 
     def supports_format(self, width_cm: float, height_cm: float) -> bool:
+        """Check whether the equipment supports the given print dimensions.
+
+        Orientation-agnostic: compares sorted side lengths against the
+        equipment's maximum width and height.
+
+        Args:
+            width_cm: Requested print width in centimeters.
+            height_cm: Requested print height in centimeters.
+
+        Returns:
+            ``True`` if both dimensions fit within the equipment limits.
+        """
         if (
             width_cm is None
             or height_cm is None
@@ -258,16 +338,22 @@ class Equipment(models.Model):
         return req_min <= cap_min and req_max <= cap_max
 
     def set_operational(self, state: bool) -> None:
+        """Update the operational status flag of this equipment.
+
+        Args:
+            state: ``True`` if operational, ``False`` if out of service.
+        """
         self.is_operational = bool(state)
         if not self._state.adding:
             self.save(update_fields=["is_operational"])
 
     def __str__(self) -> str:
+        """Return the equipment name and owning salon."""
         return f"{self.name} ({self.salon.name})"
 
 
 class Service(models.Model):
-    """Каталожная услуга фотопечати/постобработки."""
+    """Catalog service for photo printing or post-processing."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=150, verbose_name="Название услуги")
@@ -333,6 +419,7 @@ class Service(models.Model):
         return dec
 
     def get_allowed_options_map(self) -> dict[str, Decimal]:
+        """Parse ``allowed_options`` JSON into a ``{option_name: price}`` mapping."""
         raw = self.allowed_options
         result: dict[str, Decimal] = {}
         if isinstance(raw, dict):
@@ -360,6 +447,7 @@ class Service(models.Model):
         return result
 
     def get_allowed_material_names(self) -> list[str]:
+        """Extract normalized material names from ``allowed_materials`` JSON."""
         raw = self.allowed_materials
         if isinstance(raw, dict):
             return [str(k).strip() for k in raw if str(k).strip()]
@@ -376,11 +464,12 @@ class Service(models.Model):
         return []
 
     def __str__(self) -> str:
+        """Return the service name."""
         return self.name
 
 
 class Order(models.Model):
-    """Заказ клиента или заказ в салоне (фото на документы)."""
+    """Customer online order or in-salon document photo order."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_number = models.CharField(max_length=32, unique=True, verbose_name="Номер заказа")
@@ -452,9 +541,18 @@ class Order(models.Model):
         )
 
     def get_status(self) -> OrderStatus:
+        """Return the current order status as an ``OrderStatus`` enum member."""
         return OrderStatus(self.status)
 
     def verify_pickup_code(self, code: str) -> bool:
+        """Verify the pickup code using constant-time comparison.
+
+        Args:
+            code: Candidate pickup code entered at handover.
+
+        Returns:
+            ``True`` if the trimmed code matches ``self.pickup_code``.
+        """
         if not self.pickup_code:
             return False
         return hmac.compare_digest(
@@ -467,6 +565,19 @@ class Order(models.Model):
         next_status: OrderStatus | str,
         actor: User | None = None,
     ) -> bool:
+        """Check whether transitioning to ``next_status`` is permitted.
+
+        Validates the transition against ``ALLOWED_STATUS_TRANSITIONS``, enforces
+        salon-routing invariants for ``READY_FOR_PICKUP`` vs. ``IN_TRANSIT``,
+        and checks role-based permissions when ``actor`` is provided.
+
+        Args:
+            next_status: Target ``OrderStatus`` or status string.
+            actor: User initiating the transition, or ``None`` for system-level checks.
+
+        Returns:
+            ``True`` if the transition is valid and authorized.
+        """
         try:
             current = OrderStatus(self.status)
             target = OrderStatus(next_status)
@@ -529,6 +640,11 @@ class Order(models.Model):
         return False
 
     def assign_salon(self, salon: Salon) -> None:
+        """Assign an execution salon and advance ``NEW``/``PENDING_ROUTING`` orders.
+
+        Args:
+            salon: Target ``Salon`` responsible for executing the order.
+        """
         self.assigned_salon = salon
         if self.status in {OrderStatus.NEW, OrderStatus.PENDING_ROUTING}:
             self.status = OrderStatus.ASSIGNED_TO_SALON
@@ -541,6 +657,21 @@ class Order(models.Model):
         actor: User | None = None,
         comment: str = "",
     ) -> OrderStatusHistory | None:
+        """Transition the order to ``next_status`` and record a history entry.
+
+        Args:
+            next_status: Target ``OrderStatus`` or status string.
+            actor: User performing the transition, or ``None`` for system transitions.
+            comment: Optional comment (saved to ``clarification_comment`` when
+                moving to ``NEEDS_CLARIFICATION``).
+
+        Returns:
+            The created ``OrderStatusHistory`` record, or ``None`` if the order
+            has not been saved yet.
+
+        Raises:
+            InvalidStatusTransitionError: If the transition is not permitted.
+        """
         if not self.can_transition_to(next_status, actor=actor):
             raise InvalidStatusTransitionError(
                 f"Недопустимый переход статуса заказа из «{self.status}» в «{next_status}»."
@@ -568,11 +699,12 @@ class Order(models.Model):
         )
 
     def __str__(self) -> str:
+        """Return the order number and current status."""
         return f"Заказ {self.order_number} ({self.status})"
 
 
 class PhotoFile(models.Model):
-    """Загруженный файл фотографии (в MinIO/S3 или локальном хранилище)."""
+    """Uploaded photo file metadata (stored in MinIO/S3 or local storage)."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(
@@ -620,11 +752,12 @@ class PhotoFile(models.Model):
         )
 
     def __str__(self) -> str:
+        """Return the original filename and format."""
         return f"{self.original_name} ({self.file_format})"
 
 
 class OrderItem(models.Model):
-    """Позиция заказа."""
+    """Line item within an ``Order``."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(
@@ -663,20 +796,24 @@ class OrderItem(models.Model):
 
     @property
     def file_key(self) -> str:
+        """Return the storage object key of the associated photo."""
         return self.photo.file_key
 
     def get_dimensions(self) -> tuple[float, float]:
+        """Return the item dimensions as a ``(width_cm, height_cm)`` tuple."""
         return (self.width_cm, self.height_cm)
 
     def get_subtotal(self) -> Decimal:
+        """Return the calculated price for this order item."""
         return self.item_price
 
     def __str__(self) -> str:
+        """Return a human-readable summary of the order item."""
         return f"{self.service.name} ({self.width_cm}×{self.height_cm} см × {self.quantity})"
 
 
 class OrderStatusHistory(models.Model):
-    """Журнал переходов статусов заказа."""
+    """Audit log entry for order status transitions."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(
@@ -717,10 +854,13 @@ class OrderStatusHistory(models.Model):
         ordering = ("changed_at",)
 
     def get_status(self) -> OrderStatus:
+        """Return ``new_status`` as an ``OrderStatus`` enum member."""
         return OrderStatus(self.new_status)
 
     def get_timestamp(self) -> datetime:
+        """Return the timestamp when the transition occurred."""
         return self.changed_at
 
     def __str__(self) -> str:
+        """Return the order number and status transition summary."""
         return f"{self.order.order_number}: {self.old_status} -> {self.new_status}"

@@ -1,4 +1,4 @@
-"""WSGI-точка входа для проекта YouPhoto."""
+"""WSGI entry point for the YouPhoto project."""
 
 from __future__ import annotations
 

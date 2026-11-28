@@ -1,4 +1,4 @@
-"""Конфигурация Django для системы заказов сети фотосалонов YouPhoto."""
+"""Django settings for the YouPhoto photo salon network order system."""
 
 from __future__ import annotations
 

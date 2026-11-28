@@ -1,4 +1,4 @@
-"""Регистрация моделей приложения core в административной панели Django."""
+"""Django admin site registrations for the ``apps.core`` application."""
 
 from __future__ import annotations
 
@@ -19,12 +19,16 @@ from apps.core.models import (
 
 
 class CoreUserCreationForm(BaseUserCreationForm):
+    """Admin form for creating a new ``User`` instance."""
+
     class Meta(BaseUserCreationForm.Meta):
         model = User
         fields = ("email", "phone", "name", "role", "salon")
 
 
 class CoreUserChangeForm(UserChangeForm):
+    """Admin form for updating an existing ``User`` instance."""
+
     class Meta(UserChangeForm.Meta):
         model = User
         fields = "__all__"
@@ -32,6 +36,8 @@ class CoreUserChangeForm(UserChangeForm):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    """Admin configuration for the custom ``User`` model."""
+
     form = CoreUserChangeForm
     add_form = CoreUserCreationForm
 
@@ -94,12 +100,16 @@ class UserAdmin(BaseUserAdmin):
 
 
 class EquipmentInline(admin.TabularInline):
+    """Inline editor for ``Equipment`` attached to a ``Salon``."""
+
     model = Equipment
     extra = 0
 
 
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
+    """Admin configuration for ``Salon``."""
+
     list_display = ("name", "address", "is_active", "current_load", "delivery_cost")
     list_filter = ("is_active",)
     search_fields = ("name", "address")
@@ -108,6 +118,8 @@ class SalonAdmin(admin.ModelAdmin):
 
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
+    """Admin configuration for ``Equipment``."""
+
     list_display = (
         "name",
         "salon",
@@ -122,6 +134,8 @@ class EquipmentAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
+    """Admin configuration for ``Service``."""
+
     list_display = (
         "name",
         "service_type",
@@ -136,12 +150,16 @@ class ServiceAdmin(admin.ModelAdmin):
 
 
 class OrderItemInline(admin.TabularInline):
+    """Inline editor for ``OrderItem`` inside ``OrderAdmin``."""
+
     model = OrderItem
     extra = 0
     readonly_fields = ("id",)
 
 
 class OrderStatusHistoryInline(admin.TabularInline):
+    """Read-only inline view of ``OrderStatusHistory`` inside ``OrderAdmin``."""
+
     model = OrderStatusHistory
     extra = 0
     readonly_fields = ("id", "old_status", "new_status", "actor", "comment", "changed_at")
@@ -149,6 +167,8 @@ class OrderStatusHistoryInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    """Admin configuration for ``Order``."""
+
     list_display = (
         "order_number",
         "order_type",
@@ -167,6 +187,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(PhotoFile)
 class PhotoFileAdmin(admin.ModelAdmin):
+    """Admin configuration for ``PhotoFile``."""
+
     list_display = (
         "original_name",
         "file_format",
@@ -183,6 +205,8 @@ class PhotoFileAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
+    """Admin configuration for ``OrderItem``."""
+
     list_display = (
         "order",
         "service",
@@ -197,6 +221,8 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(OrderStatusHistory)
 class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    """Admin configuration for ``OrderStatusHistory``."""
+
     list_display = ("order", "old_status", "new_status", "actor", "changed_at")
     list_filter = ("new_status",)
     search_fields = ("order__order_number", "comment")

@@ -1,29 +1,32 @@
-"""Доменные исключения системы заказов YouPhoto (все сообщения на русском языке согласно S-USE-01)."""
+"""Domain exceptions for the YouPhoto order system.
+
+All user-facing exception messages must be in Russian per S-USE-01.
+"""
 
 
 class YouPhotoDomainError(Exception):
-    """Базовое доменное исключение системы YouPhoto."""
+    """Base domain exception for the YouPhoto system."""
 
 
 class InvalidStatusTransitionError(YouPhotoDomainError):
-    """Недопустимый переход статуса заказа (U-M-03, п. 5.2)."""
+    """Raised when an order status transition is not allowed (U-M-03, sec. 5.2)."""
 
 
 class EquipmentMismatchError(YouPhotoDomainError):
-    """В выбранном салоне отсутствует исправное оборудование или услуга для выполнения заказа (U-A-05, US-02 3a)."""
+    """Raised when a salon lacks operational equipment or the required service (U-A-05)."""
 
 
 class InvalidPickupCodeError(YouPhotoDomainError):
-    """Неверный код выдачи заказа (US-06 5a)."""
+    """Raised when the provided order pickup code is invalid (US-06 5a)."""
 
 
 class FileValidationError(YouPhotoDomainError):
-    """Файл не подходит по формату или превышает лимит 50 МБ (U-C-03, S-INT-01)."""
+    """Raised when an uploaded file fails format or 50 MB size validation (U-C-03)."""
 
 
 class ActiveOrdersConflictError(YouPhotoDomainError):
-    """У удаляемого салона, оборудования или услуги есть заказы в работе (U-A-02, US-05 4a)."""
+    """Raised when deleting a salon, equipment, or service with active orders (U-A-02, US-05 4a)."""
 
 
 class PermissionDeniedDomainError(YouPhotoDomainError):
-    """Нарушение ролевого доступа (S-SEC-03)."""
+    """Raised on role-based access control violations (S-SEC-03)."""

@@ -1,4 +1,4 @@
-"""ASGI-точка входа для проекта YouPhoto."""
+"""ASGI entry point for the YouPhoto project."""
 
 from __future__ import annotations
 
